@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fabric Defect Report</title>
+
+  <!-- THIS CDN NEVER GETS BLOCKED — 100% RELIABLE -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+  <style>
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #0d1117;
+      color: #c9d1d9;
+      margin: 0;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    .container { max-width: 1200px; margin: 0 auto; }
+
+    .header {
+      text-align: center;
+      padding: 20px;
+      background: #161b22;
+      border-radius: 12px;
+      margin-bottom: 25px;
+      border: 1px solid #30363d;
+    }
+    h1 { margin: 0; font-size: 1.8em; color: #58a6ff; }
+    .total { margin-top: 8px; font-size: 1.3em; color: #8b949e; }
+
+    .back { text-align: center; margin: 20px 0; }
+    .back a { color: #58a6ff; text-decoration: none; font-weight: 500; }
+
+    .chart-box {
+      background: #161b22;
+      padding: 18px;
+      border-radius: 10px;
+      margin: 25px auto;
+      border: 1px solid #30363d;
+      max-width: 600px;
+    }
+    .chart-box h2 {
+      text-align: center;
+      margin: 0 0 15px 0;
+      color: #8b949e;
+      font-size: 1.2em;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+      margin-top: 10px;
+    }
+    .card {
+      background: #161b22;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid #30363d;
+      transition: transform 0.2s;
+    }
+    .card:hover { transform: translateY(-4px); }
+    .thumb {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+      cursor: pointer;
+      border-bottom: 3px solid #58a6ff;
+    }
+    .info {
+      padding: 12px;
+      text-align: center;
+      background: #0d1117;
+    }
+    .type { font-weight: bold; color: #58a6ff; font-size: 1.15em; }
+    .conf { color: #7ee787; font-weight: 500; }
+    .time { color: #8b949e; font-size: 0.9em; margin-top: 4px; }
+    .delete-btn {
+      width: 100%;
+      padding: 10px;
+      background: #da3633;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-size: 0.95em;
+    }
+    .delete-btn:hover { background: #b02a26; }
+
+    .no-data { text-align: center; padding: 80px; color: #666; font-size: 1.2em; }
+
+    .lightbox {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left:0; top:0;
+      width:100%; height:100%;
+      background:rgba(0,0,0,0.95);
+      justify-content:center;
+      align-items:center;
+      padding:20px;
+    }
+    .lightbox img { max-width:95%; max-height:max-height:90vh; border-radius:12px; }
+    .close {
+      position:absolute;
+      top:20px; right:35px;
+      color:#fff;
+      font-size:40px;
+      font-weight:bold;
+      cursor:pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <div class="header">
+      <h1>Fabric Defect Report</h1>
+      <div class="total">Total Defects: <strong style="color:#58a6ff">{{ defects|length }}</strong></div>
+    </div>
+
+    <div class="back"><a href="/">Back to Camera</a></div>
+
+    <!-- Small Vertical Bar Chart -->
+    <div class="chart-box">
+      <h2>Defect Types Count</h2>
+      <canvas id="defectChart" height="220"></canvas>
+    </div>
+    <div style="text-align:center; margin:40px 0;">
+  <a href="/download_pdf">
+    <button style="padding:16px 40px; font-size:18px; background:#0066cc; color:white; 
+                     border:none; border-radius:50px; cursor:pointer; font-weight:bold;
+                     box-shadow:0 6px 20px rgba(0,102,204,0.4);">
+      Download PDF Report
+    </button>
+  </a>
+</div>
+
+
+    <!-- Image Grid -->
+    <div class="grid">
+      {% for d in defects %}
+      <div class="card">
+        <img src="{{ d.image_path }}" class="thumb" onclick="openLightbox('{{ d.image_path }}')">
+        <div class="info">
+          <div class="type">{{ d.defect_name.replace('_', ' ') | title }}</div>
+          <div class="conf">{{ "%.1f"|format(d.confidence * 100) }}% confidence</div>
+          <div class="time">{{ d.detected_at.strftime('%d %b • %H:%M') }}</div>
+        </div>
+        <button class="delete-btn" onclick="if(confirm('Delete?')) location.href='/delete_defect/{{ d.id }}'">
+          Delete
+        </button>
+      </div>
+      {% endfor %}
+    </div>
+
+    {% if defects|length == 0 %}
+    <div class="no-data">No defects detected yet. Monitoring...</div>
+    {% endif %}
+
+  </div>
+
+  <!-- Lightbox -->
+  <div id="lightbox" class="lightbox" onclick="this.style.display='none'">
+    <span class="close" onclick="document.getElementById('lightbox').style.display='none'">x</span>
+    <img id="fullImage" src="">
+  </div>
+
+  <script>
+    function openLightbox(src) {
+      document.getElementById('fullImage').src = src;
+      document.getElementById('lightbox').style.display = 'flex';
+    }
+
+    // Chart — now 100% working
+    document.addEventListener('DOMContentLoaded', () => {
+      const ctx = document.getElementById('defectChart').getContext('2d');
+      const stats = {{ defect_stats | tojson | safe }};
+
+      const data = stats.labels.length === 0 ? {
+        labels: ['No defects'],
+        values: [1]
+      } : stats;
+
+      const colors = ['#58a6ff','#79c0ff','#79b8ff','#66d9ef','#a6e3a1','#f9e2af','#f38ba8','#cba6f7','#89b4fa'];
+
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: data.labels,
+          datasets: [{
+            data: data.values,
+            backgroundColor: data.labels.map((_,i) => colors[i % colors.length]),
+            borderWidth: 1,
+            borderRadius: 6,
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: true, ticks: { color: '#8b949e', stepSize: 1 }, grid: { color: '#21262d' } },
+            x: { ticks: { color: '#c9d1d9' }, grid: { display: false } }
+          }
+        }
+      });
+    });
+  </script>
+</body>
+</html>

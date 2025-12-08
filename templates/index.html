@@ -1,0 +1,100 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fabric Defect Detector</title>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background: #121212; color: #fff; text-align: center; margin: 0; padding: 20px; }
+    h1 { color: #00ffcc; margin-bottom: 10px; }
+    .container { max-width: 900px; margin: 0 auto; padding: 20px; background: #1e1e1e; border-radius: 15px; box-shadow: 0 0 20px rgba(0,255,255,0.2); }
+    #videoFeed { width: 100%; max-width: 800px; border: 5px solid #333; border-radius: 10px; background: #000; }
+    
+    button {
+      margin: 10px;
+      padding: 15px 40px;
+      font-size: 18px;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    #toggleBtn { background: #00ff88; color: black; }
+    #toggleBtn:hover { background: #00cc66; transform: scale(1.05); }
+    
+    #defectsBtn {
+      background: #ff3366;
+      color: white;
+      font-weight: bold;
+    }
+    #defectsBtn:hover { background: #ff5555; transform: scale(1.05); }
+
+    .status { margin-top: 15px; font-size: 18px; color: #aaa; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Fabric Defect Detector</h1>
+    <p>Real-time detection using deep learning (H5 Model)</p>
+
+    <img id="videoFeed" src="{{ url_for('video_feed') }}" alt="Loading camera...">
+
+    <br><br>
+    <button id="toggleBtn" onclick="toggleStream()">Start Camera</button>
+
+    <a href="/defects" target="_blank" style="text-decoration:none;">
+      <button id="defectsBtn">View Saved Defects (0)</button>
+    </a>
+
+    <div class="status" id="status">Click button to start detection</div>
+  </div>
+
+  <script>
+    const img = document.getElementById('videoFeed');
+    const btn = document.getElementById('toggleBtn');
+    const status = document.getElementById('status');
+    const defectsBtn = document.getElementById('defectsBtn');
+    let isRunning = true;
+
+    // Update defect count every 4 seconds
+    function updateDefectCount() {
+      fetch('/defect_count')
+        .then(r => r.json())
+        .then(data => {
+          defectsBtn.textContent = `View Saved Defects (${data.count})`;
+        })
+        .catch(() => {
+          defectsBtn.textContent = "View Saved Defects (?)";
+        });
+    }
+    updateDefectCount();
+    setInterval(updateDefectCount, 4000);
+
+    img.onload = () => {
+      status.textContent = "Camera Active – Detecting Defects...";
+      status.style.color = "#00ff88";
+    };
+
+    img.onerror = () => {
+      status.textContent = "Camera stopped or not available";
+      status.style.color = "#ff4444";
+      btn.textContent = "Start Camera";
+      isRunning = false;
+    };
+
+    function toggleStream() {
+      if (isRunning) {
+        img.src = "";
+        btn.textContent = "Start Camera";
+        status.textContent = "Camera stopped";
+        status.style.color = "#ffaa00";
+      } else {
+        img.src = "{{ url_for('video_feed') }}?" + new Date().getTime();
+        btn.textContent = "Stop Camera";
+      }
+      isRunning = !isRunning;
+    }
+  </script>
+</body>
+</html>
