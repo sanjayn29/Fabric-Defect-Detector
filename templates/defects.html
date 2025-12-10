@@ -3,142 +3,110 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Fabric Defect Report</title>
-
-  <!-- THIS CDN NEVER GETS BLOCKED — 100% RELIABLE -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-
+  <title>Fabric Defect Analytics</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <style>
-    body {
-      font-family: 'Segoe UI', Arial, sans-serif;
-      background: #0d1117;
-      color: #c9d1d9;
-      margin: 0;
-      padding: 20px;
-      line-height: 1.6;
-    }
-    .container { max-width: 1200px; margin: 0 auto; }
-
-    .header {
-      text-align: center;
-      padding: 20px;
-      background: #161b22;
-      border-radius: 12px;
-      margin-bottom: 25px;
-      border: 1px solid #30363d;
-    }
-    h1 { margin: 0; font-size: 1.8em; color: #58a6ff; }
-    .total { margin-top: 8px; font-size: 1.3em; color: #8b949e; }
-
+    body { font-family: 'Segoe UI', sans-serif; background: #0d1117; color: #c9d1d9; margin: 0; padding: 20px; }
+    .container { max-width: 1400px; margin: 0 auto; }
+    .header { text-align: center; padding: 25px; background: #161b22; border-radius: 12px; margin-bottom: 25px; border: 1px solid #30363d; }
+    h1 { margin: 0; color: #58a6ff; font-size: 2.2em; }
+    .total { font-size: 1.5em; margin-top: 10px; color: #79c0ff; }
     .back { text-align: center; margin: 20px 0; }
-    .back a { color: #58a6ff; text-decoration: none; font-weight: 500; }
+    .back a { color: #58a6ff; text-decoration: none; font-weight: bold; font-size: 1.2em; }
 
+    /* Batch Selector */
+    .batch-selector {
+      text-align: center; margin: 30px 0; padding: 15px; background: #161b22; border-radius: 12px; border: 1px solid #30363d;
+    }
+    .batch-selector select {
+      padding: 12px 20px; font-size: 17px; border-radius: 50px; background: #333; color: white; border: none; min-width: 400px;
+    }
+
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+      gap: 20px;
+      margin: 30px 0;
+    }
     .chart-box {
-      background: #161b22;
-      padding: 18px;
-      border-radius: 10px;
-      margin: 25px auto;
-      border: 1px solid #30363d;
-      max-width: 600px;
+      background: #161b22; padding: 20px; border-radius: 12px; border: 1px solid #30363d; height: 400px;
     }
-    .chart-box h2 {
-      text-align: center;
-      margin: 0 0 15px 0;
-      color: #8b949e;
-      font-size: 1.2em;
+    .chart-box h2 { text-align: center; color: #79c0ff; margin: 0 0 15px 0; font-size: 1.3em; }
+
+    .download-btn {
+      display: block; width: 320px; margin: 40px auto; padding: 18px;
+      background: linear-gradient(90deg, #0066cc, #58a6ff); color: white; font-size: 19px; font-weight: bold;
+      text-align: center; border-radius: 50px; text-decoration: none; box-shadow: 0 6px 20px rgba(0,102,204,0.4);
     }
+    .download-btn:hover { transform: translateY(-3px); }
 
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 20px;
-      margin-top: 10px;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 22px;
+      margin-top: 30px;
     }
     .card {
-      background: #161b22;
-      border-radius: 10px;
-      overflow: hidden;
-      border: 1px solid #30363d;
-      transition: transform 0.2s;
+      background: #161b22; border-radius: 12px; overflow: hidden; border: 1px solid #30363d; transition: 0.3s;
     }
-    .card:hover { transform: translateY(-4px); }
-    .thumb {
-      width: 100%;
-      height: 180px;
-      object-fit: cover;
-      cursor: pointer;
-      border-bottom: 3px solid #58a6ff;
-    }
-    .info {
-      padding: 12px;
-      text-align: center;
-      background: #0d1117;
-    }
-    .type { font-weight: bold; color: #58a6ff; font-size: 1.15em; }
-    .conf { color: #7ee787; font-weight: 500; }
-    .time { color: #8b949e; font-size: 0.9em; margin-top: 4px; }
-    .delete-btn {
-      width: 100%;
-      padding: 10px;
-      background: #da3633;
-      color: white;
-      border: none;
-      cursor: pointer;
-      font-size: 0.95em;
-    }
+    .card:hover { transform: translateY(-8px); box-shadow: 0 12px 30px rgba(88,166,255,0.3); }
+    .thumb { width: 100%; height: 200px; object-fit: cover; cursor: pointer; }
+    .info { padding: 16px; text-align: center; background: #0d1117; }
+    .type { font-weight: bold; color: #58a6ff; font-size: 1.3em; }
+    .conf { color: #7ee787; margin: 8px 0; font-size: 1.1em; }
+    .time { color: #8b949e; font-size: 0.95em; }
+    .batch-tag { background: #30363d; padding: 5px 12px; border-radius: 20px; font-size: 0.8em; margin-top: 6px; display: inline-block; }
+
+    .delete-btn { padding: 12px; background: #da3633; color: white; border: none; cursor: pointer; font-weight: bold; width: 100%; border-radius: 0 0 12px 12px; }
     .delete-btn:hover { background: #b02a26; }
 
-    .no-data { text-align: center; padding: 80px; color: #666; font-size: 1.2em; }
+    .no-data { text-align: center; padding: 100px; color: #666; font-size: 1.6em; background: #161b22; border-radius: 12px; margin: 50px 0; }
 
-    .lightbox {
-      display: none;
-      position: fixed;
-      z-index: 1000;
-      left:0; top:0;
-      width:100%; height:100%;
-      background:rgba(0,0,0,0.95);
-      justify-content:center;
-      align-items:center;
-      padding:20px;
-    }
-    .lightbox img { max-width:95%; max-height:max-height:90vh; border-radius:12px; }
-    .close {
-      position:absolute;
-      top:20px; right:35px;
-      color:#fff;
-      font-size:40px;
-      font-weight:bold;
-      cursor:pointer;
-    }
+    .lightbox { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.98); justify-content: center; align-items: center; }
+    .lightbox img { max-width: 90%; max-height: 90vh; border-radius: 15px; }
+    .close { position: absolute; top: 30px; right: 40px; color: white; font-size: 60px; cursor: pointer; }
   </style>
 </head>
 <body>
   <div class="container">
-
     <div class="header">
-      <h1>Fabric Defect Report</h1>
-      <div class="total">Total Defects: <strong style="color:#58a6ff">{{ defects|length }}</strong></div>
+      <h1>Fabric Defect Analytics</h1>
+      <div class="total">Total Defects in Current View: <strong>{{ defects|length }}</strong></div>
+      {% if active_batch %}
+        <div style="margin-top:10px; color:#79c0ff;">
+          Active Batch: <strong>{{ active_batch.name }}</strong> • {{ active_batch.fabric_type }} (ID: {{ active_batch.id }})
+        </div>
+      {% endif %}
     </div>
 
-    <div class="back"><a href="/">Back to Camera</a></div>
+    <div class="back"><a href="/">← Back to Live Camera</a></div>
 
-    <!-- Small Vertical Bar Chart -->
-    <div class="chart-box">
-      <h2>Defect Types Count</h2>
-      <canvas id="defectChart" height="220"></canvas>
+    <!-- Batch Selector -->
+    <div class="batch-selector">
+      <label for="batchSelect"><strong>View Defects By Batch:</strong></label><br><br>
+      <select id="batchSelect" onchange="location.href='?batch_id='+this.value">
+        <option value="">Current Active / Latest Batch</option>
+        {% for b in batches %}
+          <option value="{{ b.id }}" {% if selected_batch == b.id %}selected{% endif %}>
+            #{{ b.id }}: {{ b.batch_name }} ({{ b.fabric_type }}) — {{ b.status|title }} — {{ b.created_at.strftime('%d %b %Y') }}
+          </option>
+        {% endfor %}
+      </select>
     </div>
-    <div style="text-align:center; margin:40px 0;">
-  <a href="/download_pdf">
-    <button style="padding:16px 40px; font-size:18px; background:#0066cc; color:white; 
-                     border:none; border-radius:50px; cursor:pointer; font-weight:bold;
-                     box-shadow:0 6px 20px rgba(0,102,204,0.4);">
-      Download PDF Report
-    </button>
-  </a>
-</div>
 
+    <!-- Charts -->
+    <div class="charts-grid">
+      <div class="chart-box"><h2>Defect Types Distribution</h2><canvas id="pieChart"></canvas></div>
+      <div class="chart-box"><h2>Count by Type</h2><canvas id="barChart"></canvas></div>
+      <div class="chart-box"><h2>Defects Over Time</h2><canvas id="lineChart"></canvas></div>
+      <div class="chart-box"><h2>Avg Confidence by Type</h2><canvas id="confChart"></canvas></div>
+    </div>
 
-    <!-- Image Grid -->
+    <a href="/download_pdf{% if selected_batch %}?batch_id={{ selected_batch }}{% endif %}" class="download-btn">
+      Download PDF Report{% if selected_batch %} (This Batch){% endif %}
+    </a>
+
+    <!-- Defect Cards -->
     <div class="grid">
       {% for d in defects %}
       <div class="card">
@@ -146,9 +114,10 @@
         <div class="info">
           <div class="type">{{ d.defect_name.replace('_', ' ') | title }}</div>
           <div class="conf">{{ "%.1f"|format(d.confidence * 100) }}% confidence</div>
-          <div class="time">{{ d.detected_at.strftime('%d %b • %H:%M') }}</div>
+          <div class="time">{{ d.detected_at.strftime('%d %b %Y • %H:%M:%S') }}</div>
+          <div class="batch-tag">Batch #{{ d.batch_id }}</div>
         </div>
-        <button class="delete-btn" onclick="if(confirm('Delete?')) location.href='/delete_defect/{{ d.id }}'">
+        <button class="delete-btn" onclick="if(confirm('Delete this defect?')) location.href='/delete_defect/{{ d.id }}'">
           Delete
         </button>
       </div>
@@ -156,55 +125,88 @@
     </div>
 
     {% if defects|length == 0 %}
-    <div class="no-data">No defects detected yet. Monitoring...</div>
+    <div class="no-data">
+      {% if selected_batch %}
+        No defects found in Batch #{{ selected_batch }}
+      {% else %}
+        No defects detected yet — monitoring active...
+      {% endif %}
+    </div>
     {% endif %}
-
   </div>
 
   <!-- Lightbox -->
   <div id="lightbox" class="lightbox" onclick="this.style.display='none'">
-    <span class="close" onclick="document.getElementById('lightbox').style.display='none'">x</span>
-    <img id="fullImage" src="">
+    <span class="close" onclick="document.getElementById('lightbox').style.display='none'">×</span>
+    <img id="fullImg">
   </div>
 
   <script>
     function openLightbox(src) {
-      document.getElementById('fullImage').src = src;
+      document.getElementById('fullImg').src = src;
       document.getElementById('lightbox').style.display = 'flex';
     }
 
-    // Chart — now 100% working
-    document.addEventListener('DOMContentLoaded', () => {
-      const ctx = document.getElementById('defectChart').getContext('2d');
-      const stats = {{ defect_stats | tojson | safe }};
+    const defects = {{ defects | tojson }};
+    const stats = {{ defect_stats | tojson | safe }};
+    const labels = stats.labels.length > 0 ? stats.labels : ['No Data'];
+    const values = stats.values.length > 0 ? stats.values : [1];
+    const colors = ['#ff6b6b','#4ecdc4','#45b7d1','#feca57','#96ceb4','#ff9ff3','#54a0ff','#48dbfb','#ffe066','#ff8c42'];
 
-      const data = stats.labels.length === 0 ? {
-        labels: ['No defects'],
-        values: [1]
-      } : stats;
+    new Chart(document.getElementById('pieChart'), {
+      type: 'doughnut',
+      data: { labels, datasets: [{ data: values, backgroundColor: colors }] },
+      options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+    });
 
-      const colors = ['#58a6ff','#79c0ff','#79b8ff','#66d9ef','#a6e3a1','#f9e2af','#f38ba8','#cba6f7','#89b4fa'];
+    new Chart(document.getElementById('barChart'), {
+      type: 'bar',
+      data: { labels, datasets: [{ label: 'Count', data: values, backgroundColor: '#58a6ff', borderRadius: 8 }] },
+      options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+    });
 
-      new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: data.labels,
-          datasets: [{
-            data: data.values,
-            backgroundColor: data.labels.map((_,i) => colors[i % colors.length]),
-            borderWidth: 1,
-            borderRadius: 6,
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: { legend: { display: false } },
-          scales: {
-            y: { beginAtZero: true, ticks: { color: '#8b949e', stepSize: 1 }, grid: { color: '#21262d' } },
-            x: { ticks: { color: '#c9d1d9' }, grid: { display: false } }
-          }
-        }
-      });
+    // Line chart - hourly
+    const hourly = {};
+    defects.forEach(d => {
+      const dt = new Date(d.detected_at);
+      const key = dt.toLocaleDateString() + ' ' + dt.getHours() + ':00';
+      hourly[key] = (hourly[key] || 0) + 1;
+    });
+    const times = Object.keys(hourly).sort();
+    new Chart(document.getElementById('lineChart'), {
+      type: 'line',
+      data: {
+        labels: times.length ? times : ['—'],
+        datasets: [{
+          label: 'Defects',
+          data: times.map(t => hourly[t]),
+          borderColor: '#ff6b6b',
+          backgroundColor: 'rgba(255,107,107,0.2)',
+          tension: 0.4,
+          fill: true
+        }]
+      },
+      options: { responsive: true, plugins: { legend: { display: false } } }
+    });
+
+    // Confidence chart
+    const confMap = {};
+    defects.forEach(d => {
+      const name = d.defect_name.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+      confMap[name] = confMap[name] || [];
+      confMap[name].push(d.confidence * 100);
+    });
+    const confLabels = Object.keys(confMap);
+    const confAvg = confLabels.map(k => confMap[k].reduce((a,b)=>a+b,0)/confMap[k].length || 0);
+    new Chart(document.getElementById('confChart'), {
+      type: 'bar',
+      data: { labels: confLabels, datasets: [{ label: 'Avg %', data: confAvg, backgroundColor: '#54a0ff' }] },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: { x: { max: 100, ticks: { stepSize: 10 } } }
+      }
     });
   </script>
 </body>

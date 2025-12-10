@@ -6,24 +6,35 @@
   <title>Fabric Defect Detector</title>
   <style>
     body { font-family: 'Segoe UI', sans-serif; background: #121212; color: #fff; text-align: center; margin: 0; padding: 20px; }
-    h1 { color: #00ffcc; }
-    .container { max-width: 900px; margin: 0 auto; padding: 20px; background: #1e1e1e; border-radius: 15px; }
-    #videoFeed { width: 100%; max-width: 800px; border: 5px solid #333; border-radius: 12px; background: #000; }
-    button { margin: 15px; padding: 15px 50px; font-size: 18px; border: none; border-radius: 50px; cursor: pointer; }
-    #toggleBtn { background: #00ff88; color: black; font-weight: bold; }
-    #defectsBtn { background: #ff3366; color: white; font-weight: bold; }
-    .status { margin-top: 20px; font-size: 19px; }
+    h1 { color: #00ffcc; margin-bottom: 8px; }
+    .container { max-width: 900px; margin: 0 auto; padding: 25px; background: #1e1e1e; border-radius: 18px; box-shadow: 0 10px 40px rgba(0,255,200,0.15); }
+    #videoFeed { width: 100%; max-width: 820px; border: 6px solid #333; border-radius: 15px; background: #000; margin: 25px 0; }
+    button { margin: 12px; padding: 16px 50px; font-size: 18px; border: none; border-radius: 50px; cursor: pointer; font-weight: bold; transition: all 0.3s; }
+    #toggleBtn { background: #00ff88; color: black; }
+    #toggleBtn:hover { background: #00cc70; transform: translateY(-3px); }
+    #finishBtn { background: #ff3366; color: white; display: none; }
+    #finishBtn:hover { background: #cc0033; transform: translateY(-3px); }
+    #defectsBtn { background: #ff3366; color: white; }
+    .status { margin-top: 20px; font-size: 19px; padding: 15px; border-radius: 12px; background: #222; }
+    #batchInfo {
+      margin: 30px auto; padding: 20px; background: #161b22; border-radius: 15px; border: 2px solid #30363d;
+      font-size: 1.5em; max-width: 750px; line-height: 1.5;
+    }
+    #batchInfo a { color: #00ffcc; text-decoration: underline; font-weight: bold; }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>Fabric Defect Detector</h1>
-    <p>Real-time AI-powered fabric inspection</p>
+    <p>Real-time AI-powered fabric inspection with batch tracking</p>
 
-    <img id="videoFeed" src="{{ url_for('video_feed') }}" alt="Camera stream">
+    <div id="batchInfo">Loading batch status...</div>
+
+    <img id="videoFeed" src="" alt="Live camera feed">
 
     <br><br>
     <button id="toggleBtn" onclick="toggleStream()">Start Camera</button>
+    <button id="finishBtn" onclick="finishCurrentBatch()">Finish Batch & Stop</button>
     <a href="/defects" target="_blank"><button id="defectsBtn">View Defects (0)</button></a>
 
     <div class="status" id="status">Click "Start Camera" to begin detection</div>
@@ -31,34 +42,70 @@
 
   <script>
     const img = document.getElementById('videoFeed');
-    const btn = document.getElementById('toggleBtn');
-    const status = document.getElementById('status');
+    const toggleBtn = document.getElementById('toggleBtn');
+    const finishBtn = document.getElementById('finishBtn');
     const defectsBtn = document.getElementById('defectsBtn');
-    let running = true;
+    const status = document.getElementById('status');
+    const batchInfo = document.getElementById('batchInfo');
+    let running = false;
 
-    function updateCount() {
+    function updateDefectCount() {
       fetch('/defect_count')
         .then(r => r.json())
         .then(d => defectsBtn.textContent = `View Defects (${d.count})`)
         .catch(() => defectsBtn.textContent = "View Defects (?)");
     }
-    updateCount();
-    setInterval(updateCount, 4000);
 
-    img.onload = () => status.innerHTML = "<span style='color:#0f0'>Live Detection Active</span>";
-    img.onerror = () => status.innerHTML = "<span style='color:#f44'>Camera Error – Check Connection</span>";
+    function updateBatchInfo() {
+      fetch('/current_batch')
+        .then(r => r.json())
+        .then(data => {
+          if (data.id) {
+            batchInfo.innerHTML = `
+              <strong>Active Batch:</strong> ${data.name}<br>
+              <small style="color:#79c0ff;">${data.fabric_type} • Batch ID: ${data.id}</small>
+            `;
+            finishBtn.style.display = 'inline-block';
+          } else {
+            batchInfo.innerHTML = `
+              No active batch → <a href="/start_batch">Start New Batch</a> to begin inspection
+            `;
+            finishBtn.style.display = 'none';
+          }
+          updateDefectCount();
+        })
+        .catch(() => {
+          batchInfo.innerHTML = '<span style="color:#f44;">Connection error</span>';
+        });
+    }
+
+    function finishCurrentBatch() {
+      if (confirm("Finish current batch?\nAll future defects will require a new batch.")) {
+        fetch('/finish_batch')
+          .then(() => location.reload());
+      }
+    }
 
     function toggleStream() {
       if (running) {
         img.src = "";
-        btn.textContent = "Start Camera";
-        status.innerHTML = "Camera Paused";
+        toggleBtn.textContent = "Start Camera";
+        status.innerHTML = "<span style='color:#aaa'>Camera Paused</span>";
       } else {
-        img.src = "{{ url_for('video_feed') }}?" + new Date().getTime();
-        btn.textContent = "Stop Camera";
+        img.src = "/video_feed?" + new Date().getTime();
+        toggleBtn.textContent = "Stop Camera";
+        status.innerHTML = "<span style='color:#0f0'>Live Detection Active</span>";
       }
       running = !running;
     }
+
+    img.onload = () => status.innerHTML = "<span style='color:#0f0'>Live Detection Active</span>";
+    //img.onerror = () => status.innerHTML = "<span style='color:#f44'>Camera Error</span>";
+
+    // Init
+    updateBatchInfo();
+    setInterval(updateBatchInfo, 5000);
+    setInterval(updateDefectCount, 4000);
   </script>
 </body>
 </html>

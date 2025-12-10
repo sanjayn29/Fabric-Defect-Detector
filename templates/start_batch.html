@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Start New Batch</title>
+  <style>
+    body { font-family: 'Segoe UI'; background: #121212; color: #fff; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+    .card { background: #1e1e1e; padding: 60px; border-radius: 25px; width: 450px; text-align: center; box-shadow: 0 0 40px rgba(0,255,200,0.3); }
+    h1 { color: #00ffcc; margin-bottom: 30px; }
+    input { width: 100%; padding: 18px; margin: 15px 0; font-size: 17px; border-radius: 50px; border: none; background: #333; color: white; }
+    button { width: 100%; padding: 20px; font-size: 19px; background: #00ff88; color: black; border: none; border-radius: 50px; cursor: pointer; font-weight: bold; margin-top: 20px; }
+    button:hover { background: #00cc70; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>New Inspection Batch</h1>
+    <form method="POST">
+      <input type="text" name="batch_name" placeholder="Batch Name (e.g. Roll-2025-Dec-A1)" required>
+      <input type="text" name="fabric_type" placeholder="Fabric Type (e.g. Cotton Denim 300GSM)" required>
+      <button type="submit">Start Batch & Open Camera</button>
+    </form>
+  </div>
+</body>
+</html>
