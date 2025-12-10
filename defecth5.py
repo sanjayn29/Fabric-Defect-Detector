@@ -12,8 +12,8 @@ MODEL_PATH = 'best_model.h5'
 
 CLASS_NAMES = [
     'broken_stitch', 'defect-free', 'hole',
-    'horizontal', 'lines', 'needle_mark',
-    'pinched_fabric', 'stain', 'vertical'
+    'Holes', 'lines', 'needle_mark',
+    'Hole', 'stain', 'stain'
 ]
 INPUT_SIZE = (224, 224)
 FONT = cv2.FONT_HERSHEY_SIMPLEX
@@ -52,7 +52,7 @@ def predict_with_tta(frame, n_augment=3):
     return pred_class, confidence
 
 def main():
-    cap = cv2.VideoCapture(1)
+    cap = cv2.VideoCapture(0)
     if not cap.isOpened():
         print("Error: Camera not accessible")
         return
